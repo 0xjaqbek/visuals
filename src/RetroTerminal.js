@@ -41,7 +41,7 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
   [1] NET CELL 
   [2] SPACE FLIGHT
   
-  PRESS [ESC] TO RETURN
+  TAP SCREEN FAST 3 TIMES TO RETURN
   
   INPUT SELECTION:`,
     desktop: `
