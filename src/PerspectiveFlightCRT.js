@@ -17,29 +17,67 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
     overlayCanvas.width = window.innerWidth;
     overlayCanvas.height = window.innerHeight;
     
-    // Initialize starfield points in 3D space
-    const pointCount = 1000;
+    // Initialize starfield points in 3D space - REDUCED by 20%
+    const pointCount = 1600; // Reduced from 2000 (by 20%)
     let points = [];
+    
+    // Add special comet-like fast-moving stars - reduced count
+    const cometCount = 12; // Fewer comet-like fast stars
+    let comets = [];
     
     // Animation timing
     let time = 0;
     let lastTimestamp = 0;
     
-    // Initialize starfield with random points
-    const initializeStarField = () => {
+    // Nebula cloud parameters
+    const nebulaClouds = [];
+    const nebulaCloudCount = 15; // Number of nebula clouds
+    
+    // Initialize nebula with continuous flowing clouds of color
+    const initializeNebula = () => {
+      // Create nebula cloud formations
+      for (let i = 0; i < nebulaCloudCount; i++) {
+        nebulaClouds.push({
+          x: (Math.random() * 2 - 1) * 4000,    // Wider spread
+          y: (Math.random() * 2 - 1) * 4000,    // Wider spread
+          z: Math.random() * 3000 + 500,        // Various distances
+          size: 300 + Math.random() * 700,      // Cloud size
+          hue: Math.random() * 60 + 220,        // Blues to purples
+          opacity: 0.1 + Math.random() * 0.15   // Varying cloud opacity
+        });
+      }
+      
+      // Initialize comets (fast-moving stars with tails)
+      comets = [];
+      for (let i = 0; i < cometCount; i++) {
+        createNewComet();
+      }
+      
+      // Initialize starfield with continuous distribution
       points = [];
       for (let i = 0; i < pointCount; i++) {
-        // Random position in 3D space
-        // For more star density in the center, use a distribution that favors the center
-        // z is depth (smaller = further away)
+        // Create a continuous tunnel-like distribution
+        // Use cylindrical coordinates for a more tunnel-like effect
+        const radius = 50 + Math.random() * 2500;
+        const angle = Math.random() * Math.PI * 2;
+        // Convert to Cartesian coordinates
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        
+        // z is distributed throughout the entire tunnel
+        const z = Math.random() * 4000 + 1;
+        
         points.push({
-          x: (Math.random() * 2 - 1) * 2000,   // -2000 to 2000
-          y: (Math.random() * 2 - 1) * 2000,   // -2000 to 2000
-          z: Math.random() * 1000 + 1,         // 1 to 1001 (avoid z=0)
-          // Add color properties with different hues for more visual interest
-          hue: Math.random() * 60 + 220,       // Blues to purples (220-280)
+          x: x,
+          y: y,
+          z: z,
+          // Vary color based on position in nebula
+          hue: 180 + Math.random() * 180,       // Wider color range for nebula effect
           brightness: 50 + Math.random() * 50,  // 50-100%
-          size: 1 + Math.random() * 3          // Star size varies
+          size: 1 + Math.random() * 3,          // Star size varies
+          // Add some random velocity variation for swirling effect
+          vx: (Math.random() * 2 - 1) * 0.5,    // Small side-to-side drift
+          vy: (Math.random() * 2 - 1) * 0.5     // Small up-down drift
         });
       }
     };
@@ -302,20 +340,48 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     };
     
+    // Helper function to create a new comet with random properties
+    const createNewComet = () => {
+      // Random position at the far end of the tunnel
+      const radius = 100 + Math.random() * 2500;
+      const angle = Math.random() * Math.PI * 2;
+      
+      // Create comet with much higher speed than regular stars
+      comets.push({
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+        z: Math.random() * 2000 + 2000, // Start further out
+        speed: 60 + Math.random() * 80,  // Even faster speed
+        size: 0.7 + Math.random() * 1.0,   // Much smaller size
+        tailLength: 30 + Math.random() * 40, // Long tail
+        // White/blue color for comets
+        hue: 200 + Math.random() * 40,
+        brightness: 85 + Math.random() * 15, // Brighter
+        tailSegments: [], // Store previous positions for tail effect
+        maxTailLength: 10 + Math.random() * 10 // Shorter tail segments
+      });
+    };
+    
     const draw = (timestamp) => {
       // Calculate delta time for smooth animations
       const deltaTime = lastTimestamp ? (timestamp - lastTimestamp) / 1000 : 0;
       lastTimestamp = timestamp;
       
       // Clear canvas with each frame
-      ctx.fillStyle = 'black';
+      ctx.fillStyle = 'rgb(5, 5, 15)'; // Very dark blue background instead of pure black
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Increment time with constant speed - faster
       time += deltaTime * 5; // Increased animation speed factor
       
-      // Draw the 3D starfield perspective
-      drawStarfield(timestamp);
+      // Draw the nebula clouds first (background layer)
+      drawNebulaClouds(timestamp);
+      
+      // Draw the stars on top of nebula
+      drawStars(timestamp);
+      
+      // Draw comets (fastest moving elements)
+      drawComets(timestamp);
       
       // Apply CRT effects at the end of drawing
       applyCRTEffects(timestamp);
@@ -324,8 +390,67 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       requestAnimationFrame(draw);
     };
     
-    // Draw 3D starfield with perspective effect
-    const drawStarfield = (timestamp) => {
+    // Draw nebula cloud formations
+    const drawNebulaClouds = (timestamp) => {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      // Perspective parameters
+      const focalLength = 300;
+      const perspectiveSpeed = 10.0;
+      
+      // Process each nebula cloud
+      for (let i = 0; i < nebulaClouds.length; i++) {
+        const cloud = nebulaClouds[i];
+        
+        // Move cloud closer (decrease z)
+        cloud.z -= perspectiveSpeed;
+        
+        // If cloud is too close, reset it far away
+        if (cloud.z < 1) {
+          cloud.x = (Math.random() * 2 - 1) * 4000;
+          cloud.y = (Math.random() * 2 - 1) * 4000;
+          cloud.z = 4000; // Reset far away
+          cloud.size = 300 + Math.random() * 700;
+          cloud.hue = Math.random() * 60 + 220; // Blues to purples
+          cloud.opacity = 0.1 + Math.random() * 0.15;
+        }
+        
+        // Project cloud to screen space
+        const perspective = focalLength / cloud.z;
+        const x2d = centerX + cloud.x * perspective;
+        const y2d = centerY + cloud.y * perspective;
+        const size2d = cloud.size * perspective;
+        
+        // Only draw if on screen (with some margin)
+        if (x2d + size2d > -500 && x2d - size2d < canvas.width + 500 &&
+            y2d + size2d > -500 && y2d - size2d < canvas.height + 500) {
+            
+          // Create colorful nebula gradient
+          const gradient = ctx.createRadialGradient(
+            x2d, y2d, 0,
+            x2d, y2d, size2d
+          );
+          
+          // Nebula color with distance-based opacity
+          const opacity = Math.min(cloud.opacity, cloud.opacity * (2000 / cloud.z));
+          gradient.addColorStop(0, `hsla(${cloud.hue}, 100%, 70%, ${opacity})`);
+          gradient.addColorStop(0.6, `hsla(${cloud.hue + 20}, 90%, 50%, ${opacity * 0.6})`);
+          gradient.addColorStop(1, `hsla(${cloud.hue + 40}, 80%, 30%, 0)`);
+          
+          // Draw the nebula cloud
+          ctx.globalCompositeOperation = 'screen'; // Additive blending
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(x2d, y2d, size2d, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+      }
+    };
+    
+    // Draw stars with continuous flow effect
+    const drawStars = (timestamp) => {
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       
@@ -336,23 +461,40 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       const wobbleX = Math.sin(timestamp * 0.0005) * 10;
       const wobbleY = Math.cos(timestamp * 0.0007) * 8;
       
-      // Constant flight speed - INCREASED
-      const perspectiveSpeed = 15.0; // 3x faster than before
+      // Constant flight speed - CONSISTENT
+      const perspectiveSpeed = 15.0;
       
-      // Update all points (move them toward viewer)
+      // Update all stars
       for (let i = 0; i < points.length; i++) {
         const point = points[i];
         
         // Move point closer (decrease z)
         point.z -= perspectiveSpeed;
         
-        // If point is too close, reset it to far away at a random position
+        // Add some drift for swirling effect
+        point.x += point.vx;
+        point.y += point.vy;
+        
+        // If point is too close, reset it to far away with continuous distribution
         if (point.z < 1) {
-          point.x = (Math.random() * 2 - 1) * 2000;
-          point.y = (Math.random() * 2 - 1) * 2000;
-          point.z = 2000; // Reset to even farther away to account for faster speed
-          point.hue = Math.random() * 60 + 220; // Randomize color again
+          // Instead of completely random positioning, maintain the tunnel shape
+          // Use cylindrical coordinates for more continuous tunnel effect
+          const radius = 50 + Math.random() * 2500;
+          const angle = Math.random() * Math.PI * 2;
+          
+          // Reset position
+          point.x = Math.cos(angle) * radius;
+          point.y = Math.sin(angle) * radius;
+          point.z = 4000; // Reset to far away, ALWAYS the same depth for continuity
+          
+          // Randomize appearance slightly
+          point.hue = 180 + Math.random() * 180;
           point.brightness = 50 + Math.random() * 50;
+          point.size = 1 + Math.random() * 3;
+          
+          // Keep small random drift for swirling effect
+          point.vx = (Math.random() * 2 - 1) * 0.5;
+          point.vy = (Math.random() * 2 - 1) * 0.5;
         }
         
         // Calculate perspective projection
@@ -406,49 +548,108 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         }
       }
       
-      // Add occasional perspective grid lines for depth perception
-      if (Math.random() > 0.95) {
-        // Draw a set of perspective grid lines
-        const gridLines = 10;
-        const gridDistance = 500 + Math.random() * 500; // z-distance for grid
-        const gridAngle = Math.random() * Math.PI * 2; // Random rotation
-        
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 1;
-        
-        // Calculate perspective for this grid
-        const gridPerspective = focalLength / gridDistance;
-        
-        // Draw radiating lines from center
-        for (let i = 0; i < gridLines; i++) {
-          const angle = gridAngle + (i / gridLines) * Math.PI * 2;
-          const length = 1000 * gridPerspective;
-          
-          ctx.beginPath();
-          ctx.moveTo(centerX + wobbleX, centerY + wobbleY);
-          ctx.lineTo(
-            centerX + Math.cos(angle) * length + wobbleX,
-            centerY + Math.sin(angle) * length + wobbleY
-          );
-          ctx.stroke();
-        }
-        
-        // Draw concentric circles for depth
-        for (let radius = 100; radius < 1000; radius += 200) {
-          const scaledRadius = radius * gridPerspective;
-          
-          ctx.beginPath();
-          ctx.arc(centerX + wobbleX, centerY + wobbleY, scaledRadius, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      }
-      
       // Reset shadow for other rendering
       ctx.shadowBlur = 0;
     };
     
-    // Initialize starfield
-    initializeStarField();
+    // Draw fast-moving comet-like stars with dissolving tails
+    const drawComets = (timestamp) => {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const focalLength = 300;
+      
+      // Small wobble for comets
+      const wobbleX = Math.sin(timestamp * 0.0005) * 5;
+      const wobbleY = Math.cos(timestamp * 0.0007) * 5;
+      
+      // Process each comet
+      for (let i = 0; i < comets.length; i++) {
+        const comet = comets[i];
+        
+        // Save current position for tail effect
+        if (comet.z < 1500) { // Only start creating tails when close enough to be visible
+          comet.tailSegments.unshift({
+            x: comet.x,
+            y: comet.y,
+            z: comet.z,
+            size: comet.size
+          });
+          
+          // Limit tail length
+          if (comet.tailSegments.length > comet.maxTailLength) {
+            comet.tailSegments.pop();
+          }
+        }
+        
+        // Move comet closer at high speed
+        comet.z -= comet.speed;
+        
+        // If comet is too close or off-screen, reset it
+        if (comet.z < 1) {
+          // Remove this comet and create a new one
+          comets.splice(i, 1);
+          createNewComet();
+          i--;
+          continue;
+        }
+        
+        // Project comet to screen space
+        const perspective = focalLength / comet.z;
+        const x2d = centerX + comet.x * perspective + wobbleX;
+        const y2d = centerY + comet.y * perspective + wobbleY;
+        const size = Math.max(0.1, perspective * comet.size * 2);
+        
+        // Draw comet head (bright white/blue star) - smaller glow
+        ctx.shadowBlur = size * 3;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillStyle = `hsla(${comet.hue}, 90%, ${comet.brightness}%, 1.0)`;
+        
+        ctx.beginPath();
+        ctx.arc(x2d, y2d, size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw comet tail (dissolving segments)
+        if (comet.tailSegments.length > 0) {
+          // Start with a wider glow for the beginning of the tail
+          ctx.beginPath();
+          
+          // Get the head position (first segment)
+          const headSegment = comet.tailSegments[0];
+          const headPerspective = focalLength / headSegment.z;
+          const headX = centerX + headSegment.x * headPerspective + wobbleX;
+          const headY = centerY + headSegment.y * headPerspective + wobbleY;
+          
+          ctx.moveTo(headX, headY);
+          
+          // Draw tail segments with gradually reducing opacity
+          for (let j = 1; j < comet.tailSegments.length; j++) {
+            const segment = comet.tailSegments[j];
+            const segPerspective = focalLength / segment.z;
+            const segX = centerX + segment.x * segPerspective + wobbleX;
+            const segY = centerY + segment.y * segPerspective + wobbleY;
+            
+            // Calculate opacity that fades out along the tail
+            const opacity = 1 - (j / comet.tailSegments.length);
+            
+            // Draw line segment of tail
+            ctx.lineWidth = size * (1 - j / comet.tailSegments.length) * 1.5;
+            ctx.strokeStyle = `hsla(${comet.hue}, 80%, ${comet.brightness}%, ${opacity * 0.5})`;
+            ctx.lineTo(segX, segY);
+            ctx.stroke();
+            
+            // Reset path after each segment for proper opacity gradient
+            ctx.beginPath();
+            ctx.moveTo(segX, segY);
+          }
+        }
+      }
+      
+      // Reset shadow effect
+      ctx.shadowBlur = 0;
+    };
+    
+    // Initialize nebula and starfield
+    initializeNebula();
     
     // Create initial CRT overlay
     createCRTOverlay();
