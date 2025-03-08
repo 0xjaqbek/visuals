@@ -1,38 +1,193 @@
-.App {
-  text-align: center;
+/* Add to your styles.css or index.css */
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+@keyframes flicker {
+  0% { opacity: 0.05; }
+  5% { opacity: 0.05; }
+  6% { opacity: 0.1; }
+  11% { opacity: 0.05; }
+  11.5% { opacity: 0.15; }
+  12% { opacity: 0.05; }
+  20% { opacity: 0.05; }
+  20.5% { opacity: 0.1; }
+  21% { opacity: 0.05; }
+  40% { opacity: 0.05; }
+  40.5% { opacity: 0.12; }
+  41% { opacity: 0.05; }
+  70% { opacity: 0.05; }
+  70.5% { opacity: 0.03; }
+  71% { opacity: 0.15; }
+  71.5% { opacity: 0.05; }
+  100% { opacity: 0.05; }
 }
 
-.App-logo {
-  height: 40vmin;
+@keyframes textShadow {
+  0% { 
+    text-shadow: 0.4389924193300864px 0 1px rgba(0,30,0,0.5), 
+                 -0.4389924193300864px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px; 
+  }
+  5% {
+    text-shadow: 2.7928974010788217px 0 1px rgba(0,30,0,0.5), 
+                 -2.7928974010788217px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  10% {
+    text-shadow: 0.02956275843481219px 0 1px rgba(0,30,0,0.5), 
+                 -0.02956275843481219px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  15% {
+    text-shadow: 0.40218538552878136px 0 1px rgba(0,30,0,0.5), 
+                 -0.40218538552878136px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  20% {
+    text-shadow: 3.4794037899852017px 0 1px rgba(0,30,0,0.5), 
+                 -3.4794037899852017px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  25% {
+    text-shadow: 1.6125630401149584px 0 1px rgba(0,30,0,0.5), 
+                 -1.6125630401149584px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  30% {
+    text-shadow: 0.7015590085143956px 0 1px rgba(0,30,0,0.5), 
+                 -0.7015590085143956px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  35% {
+    text-shadow: 3.896914047650351px 0 1px rgba(0,30,0,0.5), 
+                 -3.896914047650351px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  40% {
+    text-shadow: 3.870905614848819px 0 1px rgba(0,30,0,0.5), 
+                 -3.870905614848819px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  45% {
+    text-shadow: 2.231056963361899px 0 1px rgba(0,30,0,0.5), 
+                 -2.231056963361899px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  50% {
+    text-shadow: 0.08084290417898504px 0 1px rgba(0,30,0,0.5), 
+                 -0.08084290417898504px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  55% {
+    text-shadow: 2.3758461067427543px 0 1px rgba(0,30,0,0.5), 
+                 -2.3758461067427543px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  60% {
+    text-shadow: 2.202193051050636px 0 1px rgba(0,30,0,0.5), 
+                 -2.202193051050636px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  65% {
+    text-shadow: 2.8638780614874975px 0 1px rgba(0,30,0,0.5), 
+                 -2.8638780614874975px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  70% {
+    text-shadow: 0.48874025155497314px 0 1px rgba(0,30,0,0.5), 
+                 -0.48874025155497314px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  75% {
+    text-shadow: 1.8948491305757957px 0 1px rgba(0,30,0,0.5), 
+                 -1.8948491305757957px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  80% {
+    text-shadow: 0.0833037308038857px 0 1px rgba(0,30,0,0.5), 
+                 -0.0833037308038857px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  85% {
+    text-shadow: 0.09769827255241735px 0 1px rgba(0,30,0,0.5), 
+                 -0.09769827255241735px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  90% {
+    text-shadow: 3.443339761481782px 0 1px rgba(0,30,0,0.5), 
+                 -3.443339761481782px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  95% {
+    text-shadow: 2.1841838852799786px 0 1px rgba(0,30,0,0.5), 
+                 -2.1841838852799786px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+  100% {
+    text-shadow: 2.6208764473832513px 0 1px rgba(0,30,0,0.5), 
+                 -2.6208764473832513px 0 1px rgba(0,30,0,0.3), 
+                 0 0 3px;
+  }
+}
+
+.crt-screen {
+  animation: textShadow 8s infinite;
+}
+
+/* Terminal fonts */
+.font-terminal {
+  font-family: 'VT323', 'Share Tech Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* Adds subtle bulge to mimic CRT screens */
+.crt-bulge {
+  position: relative;
+  overflow: hidden;
+}
+
+.crt-bulge::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 30%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Custom scrollbar for terminal feel */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+::-webkit-scrollbar-track {
+  background: rgba(0, 20, 0, 0.1);
 }
 
-.App-link {
-  color: #61dafb;
+::-webkit-scrollbar-thumb {
+  background: rgb(0, 0, 0);
+  border: 2px solid black;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 0, 0.5);
+}
+
+/* Terminal cursor blink */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s infinite;
 }
