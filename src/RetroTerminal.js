@@ -29,7 +29,7 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
   ///////////////////////////////////////
   //                                   //
   //   SYSTEM V11.0                    //
-  //   (c) 1985-2025 jaqbek Designs    //
+  //   (c) 1985-2025 jaqbek Visuals    //
   //                                   //
   //   {'>'}LOADING MODULE...          //
   //   {'>'}ACCESS GRANTED             //
@@ -48,7 +48,7 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
   /////////////////////////////////////////////////////////////
   //                                                         //
   //   SYSTEM V11.0                                          //
-  //   (c) 1985-2025 jaqbek Designs                          //
+  //   (c) 1985-2025 jaqbek Visuals                          //
   //                                                         //
   //   {'>'}LOADING VISUAL SEQUENCE MODULE...                //
   //   {'>'}ACCESS GRANTED                                   //
