@@ -12,6 +12,8 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
     'net': 'Launching Zooming Net Cell...',
     '2': 'Launching Perspective Flight...',
     'flight': 'Launching Perspective Flight...',
+    '3': 'Launching Landscape Squares Animation...',
+    'landscape': 'Launching Landscape Squares Animation...',
     'exit': 'Cannot terminate visualization sequence. Override required.',
     'ls': 'Directory listing:\n> net_cell.vis\n> flight.vis\n> system.cfg [LOCKED]',
     'dir': 'Directory listing:\n> net_cell.vis\n> flight.vis\n> system.cfg [LOCKED]',
@@ -40,6 +42,7 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
   
   [1] NET CELL 
   [2] SPACE FLIGHT
+  [3] LANDSCAPE
   
   TAP SCREEN FAST 3 TIMES TO RETURN
   
@@ -59,6 +62,7 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
   
   [1] ZOOMING NET CELL - Infinite grid zoom with CRT effects
   [2] PERSPECTIVE FLIGHT - Space flight through star field
+  [3] LANDSCAPE SQUARES - Dynamic abstract squares animation
   
   INFO: PRESS [ESC] TO RETURN TO TERMINAL DURING VISUALIZATION
   
@@ -119,7 +123,6 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
       // Add command to history
       setCommandHistory([...commandHistory, `{'>'}${command}`]);
       
-      // Process command
       if (commands[command]) {
         setCommandHistory(prev => [...prev, commands[command]]);
         
@@ -130,11 +133,12 @@ const RetroTerminal = ({ onVisualizationSelect }) => {
           onVisualizationSelect('net');
         } else if (command === '2' || command === 'flight') {
           onVisualizationSelect('flight');
+        } else if (command === '3' || command === 'landscape') {
+          onVisualizationSelect('landscape');
         }
       } else {
         setCommandHistory(prev => [...prev, `Command not recognized: ${command}`]);
       }
-      
       // Clear input
       e.target.command.value = '';
     }

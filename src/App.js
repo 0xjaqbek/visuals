@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import RetroTerminal from './RetroTerminal';
 import ZoomingNetCell from './ZoomingNetCell';
 import PerspectiveFlightCRT from './PerspectiveFlightCRT';
+import LandscapeSquaresAnimation from './LandscapeSquaresAnimation';
 
 const App = () => {
   const [currentView, setCurrentView] = useState('terminal');
@@ -74,9 +75,11 @@ const App = () => {
   const renderCurrentView = () => {
     switch (currentView) {
       case 'net':
-        return <ZoomingNetCell onEscape={() => setCurrentView('terminal')} />;
+        return <ZoomingNetCell />;
       case 'flight':
-        return <PerspectiveFlightCRT onEscape={() => setCurrentView('terminal')} />;
+        return <PerspectiveFlightCRT />;
+      case 'landscape':
+        return <LandscapeSquaresAnimation />;
       default:
         return <RetroTerminal onVisualizationSelect={handleVisualizationSelect} />;
     }
