@@ -1,7 +1,27 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const PerspectiveFlightCRT = ({ onEscape }) => {
     const canvasRef = useRef(null);
+    
+    // Direction control state
+    const [direction, setDirection] = useState({ x: 0, y: 0 });
+    const [isMobile, setIsMobile] = useState(false);
+    const [touchActive, setTouchActive] = useState(false);
+    const [touchPosition, setTouchPosition] = useState({ x: 0, y: 0 });
+    
+    // Direction control sensitivity
+    const controlSensitivity = 2;
+    
+    // Detect mobile device
+    useEffect(() => {
+      const checkMobile = () => {
+        setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      };
+      
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -17,33 +37,40 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
     overlayCanvas.width = window.innerWidth;
     overlayCanvas.height = window.innerHeight;
     
-    // Initialize starfield points in 3D space - REDUCED by 20%
-    const pointCount = 1600; // Reduced from 2000 (by 20%)
+    // Initialize starfield points in 3D space
+    const pointCount = 1600;
     let points = [];
     
-    // Add special comet-like fast-moving stars - reduced count
-    const cometCount = 12; // Fewer comet-like fast stars
+    // Add special comet-like fast-moving stars
+    const cometCount = 12;
     let comets = [];
     
     // Animation timing
     let time = 0;
     let lastTimestamp = 0;
     
+    // Camera position offset (this will be controlled by keyboard/touch)
+    let cameraOffsetX = 0;
+    let cameraOffsetY = 0;
+    
+    // Maximum camera offset to prevent going too far off-center
+    const maxCameraOffset = 500;
+    
     // Nebula cloud parameters
     const nebulaClouds = [];
-    const nebulaCloudCount = 15; // Number of nebula clouds
+    const nebulaCloudCount = 15;
     
     // Initialize nebula with continuous flowing clouds of color
     const initializeNebula = () => {
       // Create nebula cloud formations
       for (let i = 0; i < nebulaCloudCount; i++) {
         nebulaClouds.push({
-          x: (Math.random() * 2 - 1) * 4000,    // Wider spread
-          y: (Math.random() * 2 - 1) * 4000,    // Wider spread
-          z: Math.random() * 3000 + 500,        // Various distances
-          size: 300 + Math.random() * 700,      // Cloud size
-          hue: Math.random() * 60 + 220,        // Blues to purples
-          opacity: 0.1 + Math.random() * 0.15   // Varying cloud opacity
+          x: (Math.random() * 2 - 1) * 4000,
+          y: (Math.random() * 2 - 1) * 4000,
+          z: Math.random() * 3000 + 500,
+          size: 300 + Math.random() * 700,
+          hue: Math.random() * 60 + 220,
+          opacity: 0.1 + Math.random() * 0.15
         });
       }
       
@@ -72,12 +99,12 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
           y: y,
           z: z,
           // Vary color based on position in nebula
-          hue: 180 + Math.random() * 180,       // Wider color range for nebula effect
-          brightness: 50 + Math.random() * 50,  // 50-100%
-          size: 1 + Math.random() * 3,          // Star size varies
+          hue: 180 + Math.random() * 180,
+          brightness: 50 + Math.random() * 50,
+          size: 1 + Math.random() * 3,
           // Add some random velocity variation for swirling effect
-          vx: (Math.random() * 2 - 1) * 0.5,    // Small side-to-side drift
-          vy: (Math.random() * 2 - 1) * 0.5     // Small up-down drift
+          vx: (Math.random() * 2 - 1) * 0.5,
+          vy: (Math.random() * 2 - 1) * 0.5
         });
       }
     };
@@ -87,24 +114,23 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       // Clear the overlay
       overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
       
-      // Create scanlines - reduced visibility
-      overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Reduced opacity from 0.7
-      for (let y = 0; y < overlayCanvas.height; y += 6) { // Increased spacing from 3 to 6
-        overlayCtx.fillRect(0, y, overlayCanvas.width, 1); // Reduced thickness from 1.5 to 1
+      // Create scanlines
+      overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      for (let y = 0; y < overlayCanvas.height; y += 6) {
+        overlayCtx.fillRect(0, y, overlayCanvas.width, 1);
       }
       
-      // Add RGB pixel structure (phosphor dots effect) - GREATLY ENHANCED
-      const pixelSize = 3; // Even larger phosphor dots
+      // Add RGB pixel structure (phosphor dots effect)
+      const pixelSize = 3;
       for (let y = 0; y < overlayCanvas.height; y += 3 * pixelSize) {
         for (let x = 0; x < overlayCanvas.width; x += 3 * pixelSize) {
-          // Much more visible RGB subpixel pattern with higher opacity
-          overlayCtx.fillStyle = 'rgba(255, 30, 30, 0.3)'; // Increased red phosphor opacity
+          overlayCtx.fillStyle = 'rgba(255, 30, 30, 0.3)';
           overlayCtx.fillRect(x, y, pixelSize, pixelSize);
           
-          overlayCtx.fillStyle = 'rgba(30, 255, 30, 0.3)'; // Increased green phosphor opacity
+          overlayCtx.fillStyle = 'rgba(30, 255, 30, 0.3)';
           overlayCtx.fillRect(x + pixelSize, y, pixelSize, pixelSize);
           
-          overlayCtx.fillStyle = 'rgba(30, 30, 255, 0.3)'; // Increased blue phosphor opacity
+          overlayCtx.fillStyle = 'rgba(30, 30, 255, 0.3)';
           overlayCtx.fillRect(x + 2 * pixelSize, y, pixelSize, pixelSize);
         }
       }
@@ -127,7 +153,7 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         }
       }
       
-      // Add vignette effect (darker corners) - MUCH more pronounced
+      // Add vignette effect (darker corners)
       const gradient = overlayCtx.createRadialGradient(
         overlayCanvas.width / 2, overlayCanvas.height / 2, 0,
         overlayCanvas.width / 2, overlayCanvas.height / 2, overlayCanvas.width / 2.2
@@ -180,17 +206,17 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       ctx.globalCompositeOperation = 'source-over';
       
       // More frequent and more intense random flicker effect
-      if (Math.random() > 0.85) { // Significantly increased frequency
-        const flickerOpacity = Math.random() * 0.15; // More intense flicker
+      if (Math.random() > 0.85) {
+        const flickerOpacity = Math.random() * 0.15;
         ctx.fillStyle = `rgba(255, 255, 255, ${flickerOpacity})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       
       // ENHANCED: Much more frequent horizontal shifts (horizontal distortion)
-      if (Math.random() > 0.8) { // Greatly increased frequency (from 0.92)
-        const shiftAmount = Math.floor(Math.random() * 25) - 12; // More pronounced shift (from 15)
+      if (Math.random() > 0.8) {
+        const shiftAmount = Math.floor(Math.random() * 25) - 12;
         const y = Math.random() * canvas.height;
-        const height = 5 + Math.random() * 40; // Taller affected area (from 30)
+        const height = 5 + Math.random() * 40;
         
         try {
           const imageData = ctx.getImageData(0, y, canvas.width, height);
@@ -202,10 +228,10 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       }
       
       // UPDATED: Vertical shifts (vertical distortion) with matching parameters
-      if (Math.random() > 0.8) { // Same frequency as horizontal (from 0.85)
-        const shiftAmount = Math.floor(Math.random() * 25) - 12; // Same range as horizontal (from 20)
+      if (Math.random() > 0.8) {
+        const shiftAmount = Math.floor(Math.random() * 25) - 12;
         const x = Math.random() * canvas.width;
-        const width = 5 + Math.random() * 40; // Same range as horizontal height
+        const width = 5 + Math.random() * 40;
         
         try {
           // Get a vertical strip of the screen
@@ -232,8 +258,8 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       }
       
       // Frequent horizontal noise lines 
-      if (Math.random() > 0.8) { // Even more frequent (from 0.85)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; // Increased visibility (from 0.25)
+      if (Math.random() > 0.8) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         const lineHeight = 1 + Math.random() * 4;
         const y = Math.random() * canvas.height;
         ctx.fillRect(0, y, canvas.width, lineHeight);
@@ -248,25 +274,25 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       }
       
       // Regular color bleeding 
-      if (Math.random() > 0.85) { // More frequent
+      if (Math.random() > 0.85) {
         const bleedType = Math.floor(Math.random() * 3);
         if (bleedType === 0) {
           // Red color bleeding
-          ctx.fillStyle = 'rgba(255, 50, 50, 0.12)'; // Doubled opacity
+          ctx.fillStyle = 'rgba(255, 50, 50, 0.12)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         } else if (bleedType === 1) {
           // Green color bleeding
-          ctx.fillStyle = 'rgba(50, 255, 50, 0.12)'; // Doubled opacity
+          ctx.fillStyle = 'rgba(50, 255, 50, 0.12)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         } else {
           // Blue color bleeding
-          ctx.fillStyle = 'rgba(50, 50, 255, 0.12)'; // Doubled opacity
+          ctx.fillStyle = 'rgba(50, 50, 255, 0.12)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
       }
       
       // Regular chromatic aberration effect
-      if (Math.random() > 0.7) { // Much more frequent
+      if (Math.random() > 0.7) {
         try {
           // Grab screen content
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -278,26 +304,26 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
           tempCanvas.height = canvas.height;
           
           // Red channel shift - more pronounced
-          tempCtx.fillStyle = 'rgba(255, 0, 0, 0.2)'; // Doubled opacity
+          tempCtx.fillStyle = 'rgba(255, 0, 0, 0.2)';
           tempCtx.fillRect(0, 0, canvas.width, canvas.height);
           tempCtx.globalCompositeOperation = 'destination-in';
           tempCtx.drawImage(canvas, 0, 0);
           tempCtx.globalCompositeOperation = 'source-over';
           
           // Apply red channel with offset
-          ctx.globalAlpha = 0.2; // Doubled opacity
-          ctx.drawImage(tempCanvas, -2, 0); // Doubled offset
+          ctx.globalAlpha = 0.2;
+          ctx.drawImage(tempCanvas, -2, 0);
           
           // Blue channel shift - more pronounced
           tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-          tempCtx.fillStyle = 'rgba(0, 0, 255, 0.2)'; // Doubled opacity
+          tempCtx.fillStyle = 'rgba(0, 0, 255, 0.2)';
           tempCtx.fillRect(0, 0, canvas.width, canvas.height);
           tempCtx.globalCompositeOperation = 'destination-in';
           tempCtx.drawImage(canvas, 0, 0);
           tempCtx.globalCompositeOperation = 'source-over';
           
           // Apply blue channel with offset
-          ctx.drawImage(tempCanvas, 2, 0); // Doubled offset
+          ctx.drawImage(tempCanvas, 2, 0);
           ctx.globalAlpha = 1.0;
         } catch (e) {
           // Skip effect if there's an issue
@@ -332,8 +358,8 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         canvas.width * 0.75, canvas.height * 0.2, 0,
         canvas.width * 0.75, canvas.height * 0.2, canvas.width * 0.3
       );
-      glareGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)'); // Doubled opacity
-      glareGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.06)'); // Doubled opacity
+      glareGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+      glareGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.06)');
       glareGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
       
       ctx.fillStyle = glareGradient;
@@ -374,24 +400,45 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       // Increment time with constant speed - faster
       time += deltaTime * 5; // Increased animation speed factor
       
+      // Update camera offset based on direction state
+      // Apply easing for smoother camera movement
+      const targetOffsetX = direction.x * maxCameraOffset;
+      const targetOffsetY = direction.y * maxCameraOffset;
+      
+      // Smoothly interpolate camera position (easing)
+      cameraOffsetX += (targetOffsetX - cameraOffsetX) * 0.05;
+      cameraOffsetY += (targetOffsetY - cameraOffsetY) * 0.05;
+      
+      // Calculate wobble with added directional control influence
+      const wobbleX = Math.sin(timestamp * 0.0005) * 10 + cameraOffsetX;
+      const wobbleY = Math.cos(timestamp * 0.0007) * 8 + cameraOffsetY;
+      
+      // Constant flight speed - CONSISTENT
+      const perspectiveSpeed = 15.0;
+      
       // Draw the nebula clouds first (background layer)
-      drawNebulaClouds(timestamp);
+      drawNebulaClouds(timestamp, wobbleX, wobbleY);
       
       // Draw the stars on top of nebula
-      drawStars(timestamp);
+      drawStars(timestamp, wobbleX, wobbleY);
       
       // Draw comets (fastest moving elements)
-      drawComets(timestamp);
+      drawComets(timestamp, wobbleX, wobbleY);
       
       // Apply CRT effects at the end of drawing
       applyCRTEffects(timestamp);
+      
+      // Draw mobile touch controls if on mobile
+      if (isMobile) {
+        drawTouchControls();
+      }
       
       // Animate with timestamp
       requestAnimationFrame(draw);
     };
     
-    // Draw nebula cloud formations
-    const drawNebulaClouds = (timestamp) => {
+    // Draw nebula cloud formations with direction control
+    const drawNebulaClouds = (timestamp, wobbleX, wobbleY) => {
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       
@@ -406,6 +453,10 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         // Move cloud closer (decrease z)
         cloud.z -= perspectiveSpeed;
         
+        // Apply slight horizontal/vertical drift based on direction
+        cloud.x += direction.x * 2;
+        cloud.y += direction.y * 2;
+        
         // If cloud is too close, reset it far away
         if (cloud.z < 1) {
           cloud.x = (Math.random() * 2 - 1) * 4000;
@@ -418,8 +469,8 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         
         // Project cloud to screen space
         const perspective = focalLength / cloud.z;
-        const x2d = centerX + cloud.x * perspective;
-        const y2d = centerY + cloud.y * perspective;
+        const x2d = centerX + cloud.x * perspective + wobbleX;
+        const y2d = centerY + cloud.y * perspective + wobbleY;
         const size2d = cloud.size * perspective;
         
         // Only draw if on screen (with some margin)
@@ -449,19 +500,15 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       }
     };
     
-    // Draw stars with continuous flow effect
-    const drawStars = (timestamp) => {
+    // Draw stars with continuous flow effect and direction control
+    const drawStars = (timestamp, wobbleX, wobbleY) => {
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       
       // Create a focus point slightly ahead of center for better perspective
       const focalLength = 300; // Perspective strength
       
-      // Add subtle oscillation to the scene
-      const wobbleX = Math.sin(timestamp * 0.0005) * 10;
-      const wobbleY = Math.cos(timestamp * 0.0007) * 8;
-      
-      // Constant flight speed - CONSISTENT
+      // Constant flight speed
       const perspectiveSpeed = 15.0;
       
       // Update all stars
@@ -471,9 +518,9 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         // Move point closer (decrease z)
         point.z -= perspectiveSpeed;
         
-        // Add some drift for swirling effect
-        point.x += point.vx;
-        point.y += point.vy;
+        // Add some drift for swirling effect, enhanced by directional control
+        point.x += point.vx + (direction.x * 2);
+        point.y += point.vy + (direction.y * 2);
         
         // If point is too close, reset it to far away with continuous distribution
         if (point.z < 1) {
@@ -553,14 +600,10 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
     };
     
     // Draw fast-moving comet-like stars with dissolving tails
-    const drawComets = (timestamp) => {
+    const drawComets = (timestamp, wobbleX, wobbleY) => {
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       const focalLength = 300;
-      
-      // Small wobble for comets
-      const wobbleX = Math.sin(timestamp * 0.0005) * 5;
-      const wobbleY = Math.cos(timestamp * 0.0007) * 5;
       
       // Process each comet
       for (let i = 0; i < comets.length; i++) {
@@ -583,6 +626,10 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
         
         // Move comet closer at high speed
         comet.z -= comet.speed;
+        
+        // Apply directional control to comets as well
+        comet.x += direction.x * 5; // Stronger effect on comets
+        comet.y += direction.y * 5;
         
         // If comet is too close or off-screen, reset it
         if (comet.z < 1) {
@@ -648,11 +695,193 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       ctx.shadowBlur = 0;
     };
     
+    // Draw touch controls for mobile users
+    const drawTouchControls = () => {
+      // Draw joystick background
+      const joyRadius = Math.min(canvas.width, canvas.height) * 0.1; // 10% of screen size
+      
+      ctx.globalAlpha = touchActive ? 0.4 : 0.2; // Highlight when active
+      
+      // Draw outer circle
+      ctx.beginPath();
+      ctx.arc(canvas.width - joyRadius * 1.5, canvas.height - joyRadius * 1.5, joyRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(50, 150, 255, 0.3)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(100, 200, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Draw control stick
+      if (touchActive) {
+        // Calculate joystick handle position relative to center
+        const maxDistance = joyRadius * 0.8;
+        const joyCenterX = canvas.width - joyRadius * 1.5;
+        const joyCenterY = canvas.height - joyRadius * 1.5;
+        
+        // Calculate direction vector from center to touch
+        const dirX = touchPosition.x - joyCenterX;
+        const dirY = touchPosition.y - joyCenterY;
+        
+        // Calculate distance from center
+        const distance = Math.sqrt(dirX * dirX + dirY * dirY);
+        
+        // Normalize and clamp to max distance
+        const normalizedDistance = Math.min(distance, maxDistance);
+        const normalizedDirX = (distance > 0) ? (dirX / distance) * normalizedDistance : 0;
+        const normalizedDirY = (distance > 0) ? (dirY / distance) * normalizedDistance : 0;
+        
+        // Draw joystick handle
+        ctx.beginPath();
+        ctx.arc(
+          joyCenterX + normalizedDirX,
+          joyCenterY + normalizedDirY,
+          joyRadius * 0.4,
+          0, Math.PI * 2
+        );
+        ctx.fillStyle = 'rgba(100, 200, 255, 0.8)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(180, 230, 255, 0.9)';
+        ctx.stroke();
+      } else {
+        // Draw center point when not active
+        ctx.beginPath();
+        ctx.arc(canvas.width - joyRadius * 1.5, canvas.height - joyRadius * 1.5, joyRadius * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(100, 200, 255, 0.5)';
+        ctx.fill();
+      }
+      
+      // Reset alpha
+      ctx.globalAlpha = 1.0;
+      
+      // Draw instructional text
+      ctx.font = '14px monospace';
+      ctx.fillStyle = 'rgba(200, 230, 255, 0.7)';
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        'TOUCH TO STEER', 
+        canvas.width - joyRadius * 1.5, 
+        canvas.height - joyRadius * 3
+      );
+    };
+    
     // Initialize nebula and starfield
     initializeNebula();
     
     // Create initial CRT overlay
     createCRTOverlay();
+    
+    // Direction control listeners
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          setDirection(prev => ({ ...prev, x: -1 }));
+          break;
+        case 'ArrowRight':
+          setDirection(prev => ({ ...prev, x: 1 }));
+          break;
+        case 'ArrowUp':
+          setDirection(prev => ({ ...prev, y: -1 }));
+          break;
+        case 'ArrowDown':
+          setDirection(prev => ({ ...prev, y: 1 }));
+          break;
+      }
+    };
+    
+    const handleKeyUp = (e) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          if (direction.x < 0) setDirection(prev => ({ ...prev, x: 0 }));
+          break;
+        case 'ArrowRight':
+          if (direction.x > 0) setDirection(prev => ({ ...prev, x: 0 }));
+          break;
+        case 'ArrowUp':
+          if (direction.y < 0) setDirection(prev => ({ ...prev, y: 0 }));
+          break;
+        case 'ArrowDown':
+          if (direction.y > 0) setDirection(prev => ({ ...prev, y: 0 }));
+          break;
+      }
+    };
+    
+    // Touch control handlers
+    const handleTouchStart = (e) => {
+      const joyCenterX = canvas.width - canvas.width * 0.1 * 1.5;
+      const joyCenterY = canvas.height - canvas.height * 0.1 * 1.5;
+      const joyRadius = Math.min(canvas.width, canvas.height) * 0.1;
+      
+      // Get touch position
+      const touch = e.touches[0];
+      const touchX = touch.clientX;
+      const touchY = touch.clientY;
+      
+      // Check if touch is within joystick area
+      const dx = touchX - joyCenterX;
+      const dy = touchY - joyCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance <= joyRadius * 2) {
+        setTouchActive(true);
+        setTouchPosition({ x: touchX, y: touchY });
+        
+        // Calculate direction (-1 to 1 range)
+        const dirX = dx / (joyRadius * 0.8);
+        const dirY = dy / (joyRadius * 0.8);
+        
+        // Update direction (clamped to -1, 1)
+        setDirection({
+          x: Math.max(-1, Math.min(1, dirX)),
+          y: Math.max(-1, Math.min(1, dirY))
+        });
+        
+        // Prevent default to avoid scrolling
+        e.preventDefault();
+      }
+    };
+    
+    const handleTouchMove = (e) => {
+      if (touchActive) {
+        // Get joystick center
+        const joyCenterX = canvas.width - canvas.width * 0.1 * 1.5;
+        const joyCenterY = canvas.height - canvas.height * 0.1 * 1.5;
+        const joyRadius = Math.min(canvas.width, canvas.height) * 0.1;
+        
+        // Get touch position
+        const touch = e.touches[0];
+        const touchX = touch.clientX;
+        const touchY = touch.clientY;
+        
+        setTouchPosition({ x: touchX, y: touchY });
+        
+        // Calculate direction (-1 to 1 range)
+        const dx = touchX - joyCenterX;
+        const dy = touchY - joyCenterY;
+        
+        // Calculate normalized direction
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const maxDistance = joyRadius * 0.8;
+        
+        // Normalize to -1 to 1 range with clamping
+        const dirX = (distance > 0) ? (dx / distance) * Math.min(distance / maxDistance, 1) : 0;
+        const dirY = (distance > 0) ? (dy / distance) * Math.min(distance / maxDistance, 1) : 0;
+        
+        // Update direction
+        setDirection({
+          x: Math.max(-1, Math.min(1, dirX)),
+          y: Math.max(-1, Math.min(1, dirY))
+        });
+        
+        // Prevent default to avoid scrolling
+        e.preventDefault();
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      setTouchActive(false);
+      // Return to neutral position
+      setDirection({ x: 0, y: 0 });
+    };
     
     // Handle window resize
     const handleResize = () => {
@@ -665,24 +894,38 @@ const PerspectiveFlightCRT = ({ onEscape }) => {
       createCRTOverlay();
     };
     
+    // Set up event listeners
+    if (!isMobile) {
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
+    } else {
+      // Touch events for mobile
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+      canvas.addEventListener('touchend', handleTouchEnd);
+      canvas.addEventListener('touchcancel', handleTouchEnd);
+    }
+    
     window.addEventListener('resize', handleResize);
     
     // Start animation with timestamp
     requestAnimationFrame(draw);
     
     return () => {
+      // Clean up event listeners
+      if (!isMobile) {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+      } else {
+        canvas.removeEventListener('touchstart', handleTouchStart);
+        canvas.removeEventListener('touchmove', handleTouchMove);
+        canvas.removeEventListener('touchend', handleTouchEnd);
+        canvas.removeEventListener('touchcancel', handleTouchEnd);
+      }
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
-  
-  return (
-    <div className="w-full h-screen bg-black overflow-hidden">
-      <canvas 
-        ref={canvasRef} 
-        className="w-full h-full"
-      />
-    </div>
-  );
+  }, [direction, isMobile, touchActive, touchPosition]);
+  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />;
 };
 
 export default PerspectiveFlightCRT;
